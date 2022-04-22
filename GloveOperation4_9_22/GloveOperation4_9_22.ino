@@ -40,13 +40,13 @@ void setup() {
   }
   //Serial.setTimeout(1000);          // If data can't be read, timeout
   //establishContact();               // Waits for callback
-  Serial.flush();
+  //Serial.flush();
 }
 
 
 void loop() {
-  //readEncoders();                     // Read encoders
-  //writeData();                        // Output finger angles over USB
+  readEncoders();                     // Read encoders
+  writeData();                        // Output finger angles over USB
   readData();
   setServos();
 }
@@ -59,7 +59,7 @@ void pinSetup()
   for (int i = 0; i < sizeof(encoderPins)/sizeof(encoderPins[0]); i++)
   {
     pinMode(encoderPins[i], INPUT);
-    //pinMode(actuatorPins[i], OUTPUT);
+    pinMode(actuatorPins[i], OUTPUT);
   }
   
   // Actuator pin setup
@@ -92,76 +92,48 @@ void writeData()
   Serial.write(encoderAngles, sizeof(encoderAngles)/sizeof(encoderAngles[0]));      // Write data over USB
   //sprintf(string, "%u, %u, %u, %u, %u", encoderAngles[0], encoderAngles[1], encoderAngles[2], encoderAngles[3], encoderAngles[4]);
   //Serial.println(string);
-  /*
-  for (int i = 0; i < 5; i++)
-  {
-    //String myString = String((char *)encoderAngles);
-    Serial.print(encoderAngles[i]);
-    Serial.print(", ");
-  }
-  Serial.println();
-  */
-  
-  /*
-  if (Serial.availableForWrite() > sizeof(encoderAngles)/sizeof(encoderAngles[0]))
-  {
-    //Serial.write( (uint8_t*)encoderAngles, sizeof(encoderAngles));  
-    Serial.write(encoderAngles, sizeof(encoderAngles));  
-  }
-  */
 }
-// incommingBytes actuatorCommands
+
+
 void readData()
 {
   if (_connected)
   {
+    //digitalWrite(LED, HIGH);
     // Read 6 bytes
     Serial.readBytes(incomingBytes,sizeof(incomingBytes)/sizeof(incomingBytes[0]));
     
-    // Disconnect if last byte is zero
+    // Disconnect if last byte is NOT zero
     if (incomingBytes[5] != 0) 
     {      
-      Serial.println("Last byte not zero - Connection lost");
+      //Serial.println("Last byte not zero - Connection lost");
       _connected = false;
       return;
     }
   }
-  else    // Not connected
+  else if (!_connected)    // Not connected
   {
+    //digitalWrite(LED, LOW);
     temp = Serial.read();
     if (temp == 0)
+    {
       _connected = true;      // Connected if 0 is read   
+    }
   }
-  /*
-  while(Serial.read() > 0)
-  {
-    //delay(500);
-  }
-  if (Serial.available() >= 5)
-  {
-    Serial.readBytes(incomingBytes,sizeof(incomingBytes)/sizeof(incomingBytes[0]));  // Read commands from USB
-    if (incomingBytes[0] == 0)
-      digitalWrite(LED, HIGH);
-    //Serial.print(incomingBytes[0]);
-    //setServos();                                            // Command actuators
-  }
-  */
 }
+
 
 void setServos()
 {
-  for (int i = 0; i < sizeof(actuatorPins)/sizeof(actuatorPins[0]); i++)
+  if (_connected)
   {
-    //analogWrite(actuatorPins[i], actuatorCommands[i]);
-    servos[i].write(incomingBytes[i]);
-    /*
-    while(true) 
+    for (int i = 0; i < sizeof(actuatorPins)/sizeof(actuatorPins[0]); i++)
     {
-      Serial.write(incomingBytes[0]);  
+      //analogWrite(actuatorPins[i], actuatorCommands[i]);
+      //actuatorCommands[i] = map(incomingBytes[i], 1, 1023, 0, 255)
+      servos[i].write(incomingBytes[i]);
+      digitalWrite(LED, HIGH);
     }
-    */
-    //setServos();
-    //servos[i].write(encoderAngles[i]);
   }
 }
 
